@@ -1,0 +1,137 @@
+<!-- templates/nuam_app/carga_masiva.html -->
+{% extends 'base.html' %}
+
+{% block title %}Carga Masiva - NUAM{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-upload"></i>
+                    Carga Masiva de Calificaciones
+                </h4>
+            </div>
+            <div class="card-body">
+                
+                <!-- Instrucciones -->
+                <div class="alert alert-info mb-4">
+                    <h5 class="alert-heading">
+                        <i class="bi bi-lightbulb"></i> Instrucciones
+                    </h5>
+                    <ol class="mb-0">
+                        <li>Descarga la plantilla de Excel</li>
+                        <li>Completa los datos de las calificaciones</li>
+                        <li>Sube el archivo completado</li>
+                    </ol>
+                </div>
+                
+                <!-- Botón Descargar Plantilla -->
+                <div class="mb-4">
+                    <a href="#" class="btn btn-outline-primary" id="btnDescargarPlantilla">
+                        <i class="bi bi-download"></i>
+                        Descargar Plantilla Excel
+                    </a>
+                </div>
+                
+                <!-- Formulario de Carga -->
+                <form method="post" enctype="multipart/form-data" id="formCargaMasiva">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <label class="form-label">
+                            <i class="bi bi-file-earmark-excel"></i>
+                            Seleccionar archivo Excel
+                        </label>
+                        <input type="file" 
+                               name="archivo" 
+                               class="form-control" 
+                               accept=".xlsx,.xls" 
+                               required>
+                        <small class="text-muted">Formatos aceptados: .xlsx, .xls</small>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="bi bi-upload"></i>
+                            Cargar Archivo
+                        </button>
+                        <a href="{% url 'nuam_app:panel_corredor' %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i>
+                            Volver al Panel
+                        </a>
+                    </div>
+                </form>
+                
+                <!-- Formato Esperado -->
+                <div class="mt-4">
+                    <h5 class="border-bottom pb-2 mb-3">Formato del Archivo Excel</h5>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Columna</th>
+                                    <th>Descripción</th>
+                                    <th>Ejemplo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>secuencia</code></td>
+                                    <td>Número único > 10000</td>
+                                    <td>10001</td>
+                                </tr>
+                                <tr>
+                                    <td><code>razon_social</code></td>
+                                    <td>Nombre de la empresa</td>
+                                    <td>Empresa XYZ S.A.</td>
+                                </tr>
+                                <tr>
+                                    <td><code>mercado</code></td>
+                                    <td>ACN, RVI o RVE</td>
+                                    <td>ACN</td>
+                                </tr>
+                                <tr>
+                                    <td><code>tipo_sociedad</code></td>
+                                    <td>Tipo de sociedad</td>
+                                    <td>Anónima</td>
+                                </tr>
+                                <tr>
+                                    <td><code>factor_8...factor_19</code></td>
+                                    <td>Valores decimales (suma ≤ 1.0)</td>
+                                    <td>0.1000</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('btnDescargarPlantilla').addEventListener('click', function(e) {
+    e.preventDefault();
+    
+    // Crear plantilla Excel básica con JavaScript
+    const headers = ['secuencia', 'razon_social', 'mercado', 'tipo_sociedad'];
+    for(let i = 8; i <= 19; i++) {
+        headers.push(`factor_${i}`);
+    }
+    
+    let csv = headers.join(',') + '\n';
+    csv += '10001,Empresa Ejemplo S.A.,ACN,Anónima,' + Array(12).fill('0.0833').join(',');
+    
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'plantilla_calificaciones.csv';
+    a.click();
+});
+</script>
+{% endblock %}

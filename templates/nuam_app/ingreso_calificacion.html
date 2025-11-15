@@ -1,0 +1,164 @@
+<!-- templates/nuam_app/ingreso_calificacion.html -->
+{% extends 'base.html' %}
+
+{% block title %}{% if editando %}Editar{% else %}Nueva{% endif %} Calificación - NUAM{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-10 offset-md-1">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-plus-circle"></i>
+                    {% if editando %}Editar Calificación{% else %}Nueva Calificación Tributaria{% endif %}
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="post" id="formCalificacion">
+                    {% csrf_token %}
+                    
+                    <!-- Datos Básicos -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-info-circle text-primary"></i>
+                                Información Básica
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">
+                                <i class="bi bi-hash"></i> Secuencia *
+                            </label>
+                            {{ form.secuencia }}
+                            {% if form.secuencia.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.secuencia.errors }}
+                                </div>
+                            {% endif %}
+                            <small class="text-muted">Debe ser mayor a 10000</small>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">
+                                <i class="bi bi-tag"></i> Mercado *
+                            </label>
+                            {{ form.mercado }}
+                            {% if form.mercado.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.mercado.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">
+                                <i class="bi bi-building"></i> Razón Social *
+                            </label>
+                            {{ form.razon_social }}
+                            {% if form.razon_social.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.razon_social.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">
+                                <i class="bi bi-briefcase"></i> Tipo Sociedad *
+                            </label>
+                            {{ form.tipo_sociedad }}
+                            {% if form.tipo_sociedad.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.tipo_sociedad.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Factores de Calificación -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-calculator text-success"></i>
+                                Factores de Calificación (8-19)
+                            </h5>
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle me-2"></i>
+                                La suma de todos los factores debe ser <strong>≤ 1.0</strong>
+                                <span id="sumaActual" class="badge bg-primary ms-2">0.0000</span>
+                            </div>
+                        </div>
+                        
+                        {% for i in "8 9 10 11 12 13 14 15 16 17 18 19"|split:" " %}
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Factor {{ i }}</label>
+                            {{ form|attr:"factor_"|add:i }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Botones -->
+                    <div class="row">
+                        <div class="col-12">
+                            <hr>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-save"></i>
+                                {% if editando %}Actualizar{% else %}Guardar{% endif %} Calificación
+                            </button>
+                            <a href="{% url 'nuam_app:panel_corredor' %}" class="btn btn-secondary btn-lg">
+                                <i class="bi bi-x-circle"></i>
+                                Cancelar
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Validación en tiempo real de la suma de factores
+document.addEventListener('DOMContentLoaded', function() {
+    const factorInputs = document.querySelectorAll('input[name^="factor_"]');
+    const sumaSpan = document.getElementById('sumaActual');
+    
+    function calcularSuma() {
+        let suma = 0;
+        factorInputs.forEach(input => {
+            suma += parseFloat(input.value) || 0;
+        });
+        
+        sumaSpan.textContent = suma.toFixed(4);
+        
+        if (suma > 1.0) {
+            sumaSpan.classList.remove('bg-primary');
+            sumaSpan.classList.add('bg-danger');
+        } else {
+            sumaSpan.classList.remove('bg-danger');
+            sumaSpan.classList.add('bg-primary');
+        }
+        
+        return suma;
+    }
+    
+    factorInputs.forEach(input => {
+        input.addEventListener('input', calcularSuma);
+    });
+    
+    calcularSuma(); // Calcular al cargar
+    
+    // Validar antes de enviar
+    document.getElementById('formCalificacion').addEventListener('submit', function(e) {
+        const suma = calcularSuma();
+        if (suma > 1.0) {
+            e.preventDefault();
+            alert('La suma de factores (' + suma.toFixed(4) + ') excede el límite permitido de 1.0');
+        }
+    });
+});
+</script>
+{% endblock %}
